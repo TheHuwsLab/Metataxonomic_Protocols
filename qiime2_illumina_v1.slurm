@@ -42,8 +42,8 @@ for forward in data/*_R1.fastq.gz; do
     fi
 done
 
-# Activate the version of QIIME2 we want to use.
-source activate .../conda-envs/qiime2_2022.2 
+# Activate the version of QIIME2 we want to use - I suggest 'qiime2-amplicon-2024.10'
+source activate .../conda-envs/qiime2-amplicon-2024.10  
 
 # import data
 
@@ -82,10 +82,10 @@ $COMMAND qiime demux summarize --i-data qiime/demux.qza --o-visualization qiime/
 
 
 
-# classify
+# classify - Download sklearn model from https://library.qiime2.org/data-resources#naive-bayes-classifiers
 
 qiime feature-classifier classify-sklearn \
-  --i-classifier .../gg_2022_10_backbone_full_length.nb.qza  \
+  --i-classifier .../2024.09.backbone.v4.nb.sklearn-1.4.2.qza  \
   --i-reads ./qiime/rep-seqs.qza \
   --o-classification ./qiime/sklearn-taxonomy_GG2_ASV.qza \
   --p-n-jobs $num_threads \
