@@ -53,14 +53,24 @@ $COMMAND qiime tools import \
   --output-path ./qiime/demux.qza \
   --input-format PairedEndFastqManifestPhred33V2
 
-# denoise
+# Validate demux file
 
-$COMMAND qiime dada2 denoise-paired \
-  --i-demultiplexed-seqs ./qiime/demux.qza \
-  --p-trim-left-f 13 \
-  --p-trim-left-r 13 \
-  --p-trunc-len-f 245 \
-  --p-trunc-len-r 245 \
+$COMMAND qiime tools validate ./qiime/demux.qza
+
+# Produce Summary of demux file
+
+$COMMAND qiime demux summarize \
+  --i-data ./qiime/demux.qza \
+  --o-visualization ./qiime/demux.qzv
+
+
+# denoise - set the trim and truncation lengths according to your data quality.
+
+$COMMAND ./qiime/demux.qza \
+  --p-trim-left-f 10 \
+  --p-trim-left-r 10 \
+  --p-trunc-len-f 240 \
+  --p-trunc-len-r 240 \
   --p-n-threads $num_threads \
   --o-representative-sequences ./qiime/rep-seqs.qza \
   --o-denoising-stats ./qiime/denoising-stats.qza \
@@ -84,23 +94,23 @@ $COMMAND qiime demux summarize --i-data qiime/demux.qza --o-visualization qiime/
 
 # classify - Download sklearn model from https://library.qiime2.org/data-resources#naive-bayes-classifiers
 
-qiime feature-classifier classify-sklearn \
+$COMMAND qiime feature-classifier classify-sklearn \
   --i-classifier .../2024.09.backbone.v4.nb.sklearn-1.4.2.qza  \
   --i-reads ./qiime/rep-seqs.qza \
-  --o-classification ./qiime/sklearn-taxonomy_GG2_ASV.qza \
+  --o-classification ./qiime/sklearn-taxonomy_GG2_V4_ASV.qza \
   --p-n-jobs $num_threads \
   --verbose
 
 # metadata
 $COMMMAND qiime metadata tabulate \
-  --m-input-file ./qiime/sklearn-taxonomy_GG2_ASV.qza \
-  --o-visualization ./qiime/sklearn-taxonomy_GG2_ASV.qzv
+  --m-input-file ./qiime/sklearn-taxonomy_GG2_V4_ASV.qza \
+  --o-visualization ./qiime/sklearn-taxonomy_GG2_V4_ASV.qzv
 
 # visualisation
 $COMMAND qiime taxa barplot \
  --i-table ./qiime/table.qza \
- --i-taxonomy ./qiime/sklearn-taxonomy_GG2_ASV.qza \
- --o-visualization ./qiime/sklearn-taxonomy_GG2_ASV_Bar
+ --i-taxonomy ./qiime/sklearn-taxonomy_GG2_V4_ASV.qza \
+ --o-visualization ./qiime/sklearn-taxonomy_GG2_V4_ASV_Bar
 
 
 # export representative sequences

@@ -33,7 +33,8 @@ done
 
 
 # Activate the version of QIIME2 we want to use.
-source activate .../conda-envs/qiime2_2022.2 
+source activate .../conda-envs/qiime2-amplicon-2024.10
+
 
 
 # Import
@@ -57,7 +58,7 @@ $COMMAND qiime dada2 denoise-ccs \
    --p-front AGRGTTYGATYMTGGCTCAG \
    --p-adapter  RGYTACCTTGTTACGACTT \
    --p-n-threads $num_threads \
-   --o-representative-sequences ./qiime/rep-seqs_pacbio.qza \
+   --o-representative-sequences ./qiime/seqs_pacbio.qza \
    --o-denoising-stats ./qiime/denoising-stats_pacbio.qza \
    --o-table ./qiime/table_pacbio.qza \
    --verbose > ./qiime/denoising_error.txt 2>&1
@@ -66,7 +67,7 @@ $COMMAND qiime dada2 denoise-ccs \
 
 # $COMMAND qiime vsearch cluster-features-de-novo \
 #  --i-table ./table_pacbio.qza \
-#  --i-sequences ./rep-seqs_pacbio.qza \
+#  --i-sequences ./seqs_pacbio.qza \
 #  --p-perc-identity 0.99 \
 #  --o-clustered-table ./table-dn-99_pacbio.qza \
 #  --o-clustered-sequences ./rep-seqs-dn-99_pacbio.qza
@@ -86,31 +87,31 @@ $COMMAND qiime tools export --input-path ./qiime/denoising-stats_pacbio.qza --ou
 ## ASV
 
 $COMMAND qiime feature-classifier classify-sklearn  \
- --i-classifier .../16S_datasets/gg_2022_10_backbone_full_length.nb.qza  \
- --i-reads  ./qiime/rep-seqs_pacbio.qza  \
+ --i-classifier .../16S_datasets/2024.09.backbone.full-length.nb.sklearn-1.4.2.qza  \
+ --i-reads  ./qiime/seqs_pacbio.qza  \
  --p-n-jobs -1 \
- --o-classification ./qiime/rep-seqs-pacbio-class_ASV_GG_sklearn_NB.qza  \
+ --o-classification ./qiime/seqs-pacbio-class_ASV_GG_sklearn_NB.qza  \
  --verbose
   ## metadata
 $COMMMAND qiime metadata tabulate \
-  --m-input-file ./qiime/rep-seqs-pacbio-class_ASV_GG_sklearn_NB.qza \
-  --o-visualization ./qiime/rep-seqs-pacbio-class_ASV_GG_sklearn_NB.qzv
+  --m-input-file ./qiime/seqs-pacbio-class_ASV_GG_sklearn_NB.qza \
+  --o-visualization ./qiime/seqs-pacbio-class_ASV_GG_sklearn_NB.qzv
 ### visualisation
 $COMMAND qiime taxa barplot \
  --i-table ./qiime/table_pacbio.qza \
- --i-taxonomy ./qiime/rep-seqs-pacbio-class_ASV_GG_sklearn_NB.qza \
- --o-visualization ./qiime/rep-seqs-pacbio-class_ASV_GG_sklearn_NB_bar # This is the main output file.
+ --i-taxonomy ./qiime/seqs-pacbio-class_ASV_GG_sklearn_NB.qza \
+ --o-visualization ./qiime/seqs-pacbio-class_ASV_GG_sklearn_NB_bar # This is the main output file.
 ####
 
 # Export representative sequences
 
 $COMMAND qiime tools export \
-  --input-path ./qiime/rep-seqs_pacbio.qza \
-    --output-path ./qiime/rep-seqs_pacbio_export
+  --input-path ./qiime/seqs_pacbio.qza \
+    --output-path ./qiime/seqs_pacbio_export
 
-$COMMAND qiime tools export \
-  --input-path ./qiime/rep-seqs-dn-99_pacbio.qza \
-    --output-path ./qiime/rep-seqs-dn-99_pacbio_export
+#$COMMAND qiime tools export \
+#  --input-path ./qiime/seqs-dn-99_pacbio.qza \
+#    --output-path ./qiime/seqs-dn-99_pacbio_export
 
 
 echo "done"
@@ -136,8 +137,8 @@ echo "done"
 
 #  $COMMAND qiime feature-classifier classify-consensus-blast \
 #  --i-query ./rep-seqs-dn-99_pacbio.qza \
-#  --i-reference-reads .../16S_datasets/2022.10.backbone.full-length.fna.qza \
-#  --i-reference-taxonomy .../16S_datasets/2022.10.backbone.tax.qza \
+#  --i-reference-reads .../16S_datasets/2024.09.backbone.full-length.nb.sklearn-1.4.2.qza \
+#  --i-reference-taxonomy .../16S_datasets/2024.09.backbone.tax.qza \
 #  --o-classification ./rep-seqs-pacbio-class_OTU_99_GG_BLAST.qza \
 #  --verbose
 # ## metadata
@@ -170,7 +171,7 @@ echo "done"
 # ####
 
 # $COMMAND qiime feature-classifier classify-sklearn  \
-#  --i-classifier .../16S_datasets/gg_2022_10_backbone_full_length.nb.qza  \
+#  --i-classifier .../16S_datasets/2024.09.backbone.full-length.nb.sklearn-1.4.2.qza  \
 #  --i-reads  ./rep-seqs-dn-99_pacbio.qza  \
 #  --p-n-jobs -1 \
 #  --o-classification ./rep-seqs-pacbio-class_OTU_99_GG_sklearn_NB.qza  \
@@ -207,8 +208,8 @@ echo "done"
 
 #  $COMMAND qiime feature-classifier classify-consensus-blast \
 #  --i-query ./rep-seqs_pacbio.qza \
-#  --i-reference-reads .../16S_datasets/2022.10.backbone.full-length.fna.qza \
-#  --i-reference-taxonomy .../16S_datasets/2022.10.backbone.tax.qza \
+#  --i-reference-reads .../16S_datasets/2024.09.backbone.full-length.nb.sklearn-1.4.2.qza \
+#  --i-reference-taxonomy .../16S_datasets/2024.09.backbone.tax.qza \
 #  --o-classification ./rep-seqs-pacbio-class_ASV_GG_BLAST.qza \
 #  --verbose
 #  ## metadata
