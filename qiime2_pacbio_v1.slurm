@@ -28,7 +28,7 @@ mkdir -p qiime
 # Create the manifest file - the below code expects that all reads will be in a dir called 'data'
 echo -e "sample-id\tabsolute-filepath" > ./qiime/pacbio-manifest.tsv
 for x in  data/*.gz; do
-    echo -e `basename $x .fastq.gz`"\t"`realpath $x` >> pacbio-manifest.tsv
+    echo -e `basename $x .fastq.gz`"\t"`realpath $x` >> ./qiime/pacbio-manifest.tsv
 done
 
 
@@ -57,6 +57,8 @@ $COMMAND qiime dada2 denoise-ccs \
    --i-demultiplexed-seqs ./qiime/demux-pacbio.qza \
    --p-front AGRGTTYGATYMTGGCTCAG \
    --p-adapter  RGYTACCTTGTTACGACTT \
+   --p-min-len 1000 \
+   --p-max-len 1600 \
    --p-n-threads $num_threads \
    --o-representative-sequences ./qiime/seqs_pacbio.qza \
    --o-denoising-stats ./qiime/denoising-stats_pacbio.qza \
@@ -89,18 +91,18 @@ $COMMAND qiime tools export --input-path ./qiime/denoising-stats_pacbio.qza --ou
 $COMMAND qiime feature-classifier classify-sklearn  \
  --i-classifier .../16S_datasets/2024.09.backbone.full-length.nb.sklearn-1.4.2.qza  \
  --i-reads  ./qiime/seqs_pacbio.qza  \
- --p-n-jobs -1 \
- --o-classification ./qiime/seqs-pacbio-class_ASV_GG_sklearn_NB.qza  \
+ --p-n-jobs $num_threads \
+ --o-classification ./qiime/seqs-pacbio_ASV_GG-2024-09_FL_sklearn_NB.qz  \
  --verbose
   ## metadata
 $COMMMAND qiime metadata tabulate \
-  --m-input-file ./qiime/seqs-pacbio-class_ASV_GG_sklearn_NB.qza \
-  --o-visualization ./qiime/seqs-pacbio-class_ASV_GG_sklearn_NB.qzv
+  --m-input-file ./qiime/seqs-pacbio_ASV_GG-2024-09_FL_sklearn_NB.qz \
+  --o-visualization ./qiime/seqs-pacbio_ASV_GG-2024-09_FL_sklearn_NB.qzv
 ### visualisation
 $COMMAND qiime taxa barplot \
  --i-table ./qiime/table_pacbio.qza \
- --i-taxonomy ./qiime/seqs-pacbio-class_ASV_GG_sklearn_NB.qza \
- --o-visualization ./qiime/seqs-pacbio-class_ASV_GG_sklearn_NB_bar # This is the main output file.
+ --i-taxonomy ./qiime/seqs-pacbio_ASV_GG-2024-09_FL_sklearn_NB.qz \
+ --o-visualization ./qiime/seqs-pacbio_ASV_GG-2024-09_FL_sklearn_NB_bar # This is the main output file.
 ####
 
 # Export representative sequences
