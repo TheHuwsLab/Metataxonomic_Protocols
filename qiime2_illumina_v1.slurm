@@ -66,12 +66,13 @@ $COMMAND qiime demux summarize \
 
 # denoise - set the trim and truncation lengths according to your data quality.
 
-$COMMAND ./qiime/demux.qza \
+$COMMAND qiime dada2 denoise-paired \
+  --i-demultiplexed-seqs ./qiime/demux.qza \
   --p-trim-left-f 10 \
   --p-trim-left-r 10 \
   --p-trunc-len-f 240 \
   --p-trunc-len-r 240 \
-  --p-n-threads $num_threads \
+  --p-n-threads 6 \
   --o-representative-sequences ./qiime/rep-seqs.qza \
   --o-denoising-stats ./qiime/denoising-stats.qza \
   --o-table ./qiime/table.qza \
