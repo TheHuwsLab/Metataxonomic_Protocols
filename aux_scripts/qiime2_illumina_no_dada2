@@ -1,0 +1,43 @@
+
+
+
+
+
+qiime tools import \
+  --type 'SampleData[PairedEndSequencesWithQuality]' \
+  --input-path ./qiime/illumina-manifest.tsv \
+  --output-path ./qiime/demux.qza \
+  --input-format PairedEndFastqManifestPhred33V2
+
+qiime quality-filter q-score \
+  --i-demux demux-seqs.qza \
+  --o-filtered-sequences filtered-seqs.qza \
+  --o-filter-stats filtered-stats.qza
+#  --p-min-quality 20 \
+#  --p-quality-window 3 \
+#  --p-min-length-fraction 0.75
+
+
+
+# Convert filtered sequences to the format needed for classification
+qiime vsearch dereplicate-sequences \
+  --i-sequences filtered-seqs.qza \
+  --o-dereplicated-table derep-table.qza \
+  --o-dereplicated-sequences derep-seqs.qza
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
