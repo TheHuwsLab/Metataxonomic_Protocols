@@ -1,0 +1,22 @@
+#Removing redundancy in ciliate 18S dataset
+#Step1: Unique IDs added
+awk '/^>/{i++; printf ">%03d_%s\n", i, substr($0,2); next} {print}' ciliate_tax_ref_2025-04-01.fasta > ciliate_tax_ref_ID.fasta      
+
+#Step2: CD HIT was used to cluster sequences 
+cd-hit-est -i ciliate_tax_ref_ID.fasta -o ciliate_tax_ref_ID100 -c 1 -s 1 -sc 1 -sf 1 -g 1 -d 0
+
+#Step3: .clstr file was then editted in excel
+
+#Step4: Sequences were removed
+awk 'BEGIN{while((getline line < "remove.txt") > 0) rm[line]=1} 
+     /^>/{keep = !rm[$0]} 
+     keep' ciliate_tax_ref_ID.fasta > ciliate_tax_ref_ID_filtered.fasta
+
+#Step5: Name changes
+awk 'NR==FNR {map[$1]=$2; next} 
+     /^>/ {if ($0 in map) $0 = map[$0]} 
+     {print}' rename.txt ciliate_tax_ref_ID_filtered.fasta > ciliate_tax_ref_ID_filtered_renamed.fasta
+
+#Step6: IDs removed
+sed -E 's/^>[0-9]{3}_/>/' ciliate_tax_ref_ID_filtered_renamed.fasta > ciliate_tax_ref_ID_fltered_renamed_noID.fasta
+
