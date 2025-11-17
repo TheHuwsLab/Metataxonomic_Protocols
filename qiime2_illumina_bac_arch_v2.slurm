@@ -69,6 +69,10 @@ qiime tools import \
 qiime tools validate ./qiime/demux.qza
 
 
+# export summary
+
+qiime demux summarize --i-data qiime/demux.qza --o-visualization qiime/demux_summary
+
 # denoise - set the trim and truncation lengths according to your data quality.
 
 qiime dada2 denoise-paired \
@@ -92,9 +96,7 @@ qiime tools export --input-path ./qiime/table.qza --output-path ./qiime/table_ex
 
 qiime tools export --input-path ./qiime/denoising-stats.qza --output-path ./qiime/denoising-stats_export
 
-# export summary
 
-qiime demux summarize --i-data qiime/demux.qza --o-visualization qiime/demux_summary
 
 # summary of table and rep-seqs
 qiime feature-table summarize --i-table qiime/table.qza --o-visualization qiime/table.qzv
@@ -122,6 +124,13 @@ qiime taxa barplot \
  --i-table ./qiime/table.qza \
  --i-taxonomy ./qiime/sklearn-taxonomy_GG2_V4_ASV.qza \
  --o-visualization ./qiime/sklearn-taxonomy_GG2_V4_ASV_Bar
+
+# export taxonomy into different level csv files
+
+qiime tools export \
+  --input-path sklearn-taxonomy_GG2_V4_ASV_Bar.qzv \
+   --output-path testing_export
+
 
 
 # export representative sequences
