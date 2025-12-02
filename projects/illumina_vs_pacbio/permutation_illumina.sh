@@ -3,7 +3,7 @@
 # Function to display usage information
 usage() {
     echo "Usage: $0 -i <input_directory> -o <output_directory>"
-    echo "  -i, --input     Input manifest file path where seqs are located"
+    echo "  -i, --input     Input demux file path where seqs are located"
     echo "  -t, --threads   Number of threads (default: 10)"
     echo "  -c, --classifier Classifier location"
     echo "  -o, --output    Output directory path"
@@ -12,9 +12,9 @@ usage() {
 }
 
 # Initialise variables
-MANIFEST=""
+DEMUX=""
 BASE_OUTPUT_DIR=""
-THREADS=10
+THREADS=20
 CLASSIFIER=""
 
 
@@ -22,7 +22,7 @@ CLASSIFIER=""
 while [[ $# -gt 0 ]]; do
     case $1 in
         -i|--input)
-            MANIFEST="$2"
+            DEMUX="$2"
             shift 2
             ;;
         -o|--output)
@@ -47,17 +47,17 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Check if required arguments are provided
-if [[ -z "$MANIFEST" || -z "$BASE_OUTPUT_DIR" ]]; then
-    echo "Error: Both input and output paths must be specified."
-    usage
-fi
+# # Check if required arguments are provided
+# if [[ -z "$MANIFEST" || -z "$BASE_OUTPUT_DIR" ]]; then
+#     echo "Error: Both input and output paths must be specified."
+#     usage
+# fi
 
-# Validate input directory exists
-if [[ ! -f "$MANIFEST" ]]; then
-    echo "Error: Manifest path '$MANIFEST' does not exist."
-    exit 1
-fi
+# # Validate input directory exists
+# if [[ ! -f "$MANIFEST" ]]; then
+#     echo "Error: Manifest path '$MANIFEST' does not exist."
+#     exit 1
+# fi
 
 # Create output directory if it doesn't exist
 if [[ ! -d "$BASE_OUTPUT_DIR" ]]; then
@@ -81,7 +81,7 @@ fi
 
 
 # Convert to absolute paths
-MANIFEST=$(realpath "$MANIFEST")
+#MANIFEST=$(realpath "$MANIFEST")
 BASE_OUTPUT_DIR=$(realpath "$BASE_OUTPUT_DIR")
 
 
@@ -91,13 +91,14 @@ source activate qiime2-amplicon-2024.10
 # Define parameter combinations
 # Format: "trim_left_f,trim_left_r,trunc_len_f,trunc_len_r"
 PARAMETER_COMBINATIONS=(
+    "5,5,240,240"
+    "5,5,230,230"
     "10,10,240,240"
     "10,10,250,250"
     "10,10,230,230"
     "15,15,240,240"
     "15,15,250,250"
     "20,20,240,240"
-    "5,5,240,240"
     "10,15,240,230"
     "15,10,250,240"
 )
@@ -105,17 +106,12 @@ PARAMETER_COMBINATIONS=(
 # make output dir
 mkdir -p $BASE_OUTPUT_DIR/qiime
 
-# import data
-qiime tools import \
-  --type 'SampleData[PairedEndSequencesWithQuality]' \
-  --input-path $MANIFEST \
-  --output-path $BASE_OUTPUT_DIR/qiime/demux.qza \
-  --input-format PairedEndFastqManifestPhred33V2
+
 
 
 
 echo "Starting QIIME DADA2 parameter testing..."
-echo "Input file: $MANIFEST"
+echo "Input file: $DEMUX"
 echo "Base output directory: $BASE_OUTPUT_DIR"
 echo "Number of threads: $THREADS"
 echo "Testing ${#PARAMETER_COMBINATIONS[@]} parameter combinations"
@@ -143,7 +139,7 @@ for params in "${PARAMETER_COMBINATIONS[@]}"; do
     # Run QIIME DADA2 denoise-paired
     echo "Running QIIME DADA2..."
     qiime dada2 denoise-paired \
-        --i-demultiplexed-seqs "$BASE_OUTPUT_DIR/qiime/demux.qza" \
+        --i-demultiplexed-seqs "$DEMUX" \
         --p-trim-left-f "$trim_left_f" \
         --p-trim-left-r "$trim_left_r" \
         --p-trunc-len-f "$trunc_len_f" \
@@ -161,6 +157,11 @@ for params in "${PARAMETER_COMBINATIONS[@]}"; do
 
         if command -v qiime &> /dev/null; then
             echo "Generating quick summary..."
+
+            qiime demux summarize \
+                --i-data "$DEMUX" \
+                 --o-visualization "${full_output_dir}/demux-summary.qzv"  2>/dev/null
+
             qiime feature-table summarize \
                 --i-table "${full_output_dir}/table.qza" \
                 --o-visualization "${full_output_dir}/table-summary.qzv" 2>/dev/null
@@ -201,6 +202,22 @@ for params in "${PARAMETER_COMBINATIONS[@]}"; do
                 --i-table "${full_output_dir}/table.qza" \
                 --i-taxonomy "${full_output_dir}/sklearn-taxonomy_GG2_V4_ASV.qza" \
                 --o-visualization "${full_output_dir}/sklearn-taxonomy_GG2_V4_ASV_Bar" 2>/dev/null
+
+            qiime tools export \
+                --input-path "${full_output_dir}/sklearn-taxonomy_GG2_V4_ASV_Bar" \
+                --output-path "${full_output_dir}/sklearn-taxonomy_GG2_V4_ASV_Bar_export" 2>/dev/null
+
+            unzip "${full_output_dir}/sklearn-taxonomy_GG2_V4_ASV_Bar.qzv" \
+                 -d "${full_output_dir}/taxonomy_exported" 2>/dev/null
+            # Copy the taxonomy file to the permutation root
+            # Find the unique level-6.csv anywhere under the exported taxonomy dir and copy it to permutation root
+            genus_src=$(find "${full_output_dir}/taxonomy_exported" -type f -name 'level-6.csv' -print -quit)
+            if [[ -n "$genus_src" ]]; then
+                genus_dst="${full_output_dir}/${output_subdir}_genus.csv"
+                cp "$genus_src" "$genus_dst" 2>/dev/null && echo "Copied genus file to ${genus_dst}"
+            else
+                echo "Warning: level-6.csv not found in \`${full_output_dir}/taxonomy_exported\`" >&2
+            fi
 
         fi
 
