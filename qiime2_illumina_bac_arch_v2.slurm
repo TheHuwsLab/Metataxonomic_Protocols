@@ -1,5 +1,5 @@
 #!/bin/sh
-#SBATCH --cpus-per-task=24
+#SBATCH --cpus-per-task=20
 #SBATCH --mem=80G
 #SBATCH --job-name=qiime_&&
 #SBATCH --error=/users/&&/jobs/Qiime2_&&.err
@@ -13,7 +13,7 @@
 # If you have a high number of samples, consider increasing --mem and --time.
 
 
-num_threads=10 # This is the number of CPU threads to use.
+NUM_THREADS=20 # This is the number of CPU threads to use.
 
 #Directory containing project data.
 cd .../
@@ -41,17 +41,17 @@ for forward in data/*_R1.fastq.gz; do
 done
 
 
-for forward in /data/*/*_R1_*.fastq.gz; do
-    filename=$(basename "$forward")
-    sampleID=$(echo "$filename" | sed 's/_L001_R1_001\.fastq\.gz$//')
-    forward_dir=$(dirname "$forward")
-    reverse="${forward_dir}/${sampleID}_L001_R2_001.fastq.gz"
-    if [[ -f "$reverse" ]]; then
-        echo -e "$sampleID\t$(realpath "$forward")\t$(realpath "$reverse")" >> ./qiime/illumina-manifest_con.tsv
-    else
-        echo "Warning: Reverse file for $sampleID not found. Skipping..." >&2
-    fi
-done
+#for forward in /data/*/*_R1_*.fastq.gz; do
+#    filename=$(basename "$forward")
+#    sampleID=$(echo "$filename" | sed 's/_L001_R1_001\.fastq\.gz$//')
+#    forward_dir=$(dirname "$forward")
+#    reverse="${forward_dir}/${sampleID}_L001_R2_001.fastq.gz"
+#    if [[ -f "$reverse" ]]; then
+#        echo -e "$sampleID\t$(realpath "$forward")\t$(realpath "$reverse")" >> ./qiime/illumina-manifest_con.tsv
+#    else
+#        echo "Warning: Reverse file for $sampleID not found. Skipping..." >&2
+#    fi
+#done
 
 # Activate the version of QIIME2 we want to use - I suggest 'qiime2-amplicon-2024.10'
 source activate .../conda-envs/qiime2-amplicon-2024.10
@@ -81,7 +81,7 @@ qiime dada2 denoise-paired \
   --p-trim-left-r 10 \
   --p-trunc-len-f 240 \
   --p-trunc-len-r 240 \
-  --p-n-threads 6 \
+  --p-n-threads $NUM_THREADS \
   --o-representative-sequences ./qiime/rep-seqs.qza \
   --o-denoising-stats ./qiime/denoising-stats.qza \
   --o-table ./qiime/table.qza \
