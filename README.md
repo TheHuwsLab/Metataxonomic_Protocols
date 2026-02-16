@@ -52,6 +52,10 @@ These protocols automates the processing of Illumina paired-end and PacBio long-
 - Download the appropriate sklearn classifier from [QIIME2 Library](https://library.qiime2.org/data-resources#naive-bayes-classifiers).
 - Review and modify trimming/truncation parameters based on your data quality.
 
+A rumen-specific 18S rRNA protozoal reference database developed by members of the Huws Lab, including QIIME2-compatible files, is available at:
+https://github.com/lawkj/Protozoal_18S_rRNA_Database
+If you use this database, please cite: Manuscript under review.
+
 ## References
 
 - [QIIME2 Documentation](https://docs.qiime2.org/)

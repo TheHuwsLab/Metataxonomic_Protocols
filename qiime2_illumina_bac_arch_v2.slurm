@@ -111,7 +111,7 @@ qiime feature-classifier classify-sklearn \
   --i-classifier .../2024.09.backbone.v4.nb.sklearn-1.4.2.qza  \
   --i-reads ./qiime/rep-seqs.qza \
   --o-classification ./qiime/sklearn-taxonomy_GG2_V4_ASV.qza \
-  --p-n-jobs $num_threads \
+  --p-n-jobs $NUM_THREADS \
   --verbose
 
 # metadata
@@ -128,8 +128,8 @@ qiime taxa barplot \
 # export taxonomy into different level csv files
 
 qiime tools export \
-  --input-path sklearn-taxonomy_GG2_V4_ASV_Bar.qzv \
-   --output-path testing_export
+  --input-path ./qiime/sklearn-taxonomy_GG2_V4_ASV_Bar.qzv \
+   --output-path ./qiime/testing_export
 
 
 
