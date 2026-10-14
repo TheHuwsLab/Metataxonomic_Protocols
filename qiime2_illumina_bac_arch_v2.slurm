@@ -1,13 +1,13 @@
 #!/bin/sh
 #SBATCH --cpus-per-task=20
 #SBATCH --mem=80G
-#SBATCH --job-name=qiime_&&
-#SBATCH --error=/users/&&/jobs/Qiime2_&&.err
-#SBATCH --output=/users/&&/jobs/Qiime2_&&.txt
-#SBATCH --partition=&& # Replace with system-specific partition.
+#SBATCH --job-name=qiime_ibac
+#SBATCH --error=/users/3057556/jobs/INTEGRITY/Qiime2_ibac.err
+#SBATCH --output=/users/3057556/jobs/INTEGRITY/Qiime2_ibac.log
+#SBATCH --partition=k2-bioinf # Replace with system-specific partition.
 #SBATCH --time=60:00:00
 #SBATCH --nodes=1
-#SBATCH --mail-user=$$
+#SBATCH --mail-user=n.dimonaco@qub.ac.uk
 #SBATCH --mail-type=BEGIN,END,FAIL
 
 # If you have a high number of samples, consider increasing --mem and --time.
@@ -27,11 +27,11 @@ mkdir -p qiime
 echo -e "sampleID\tforward-absolute-filepath\treverse-absolute-filepath" > ./qiime/illumina-manifest.tsv
 
 # Loop through each forward (R1) and reverse (R2) file
-for forward in data/*_R1.fastq.gz; do
+for forward in data/*_R1_001.fastq.gz; do
     # Extract the sampleID from the filename (assuming the sample ID is the part before _R1)
-    sampleID=$(basename $forward _R1.fastq.gz)
+    sampleID=$(basename $forward _R1_001.fastq.gz)
     # Find the corresponding reverse (R2) file
-    reverse="data/${sampleID}_R2.fastq.gz"
+    reverse="data/${sampleID}_R2_001.fastq.gz"
     # Check if the reverse file exists before adding to the manifest
     if [[ -f "$reverse" ]]; then
         echo -e "$sampleID\t$(realpath $forward)\t$(realpath $reverse)" >> ./qiime/illumina-manifest.tsv
@@ -80,7 +80,7 @@ qiime dada2 denoise-paired \
   --p-trim-left-f 10 \
   --p-trim-left-r 10 \
   --p-trunc-len-f 240 \
-  --p-trunc-len-r 240 \
+  --p-trunc-len-r 200 \
   --p-n-threads $NUM_THREADS \
   --o-representative-sequences ./qiime/rep-seqs.qza \
   --o-denoising-stats ./qiime/denoising-stats.qza \
