@@ -1,4 +1,4 @@
-# metatax_stats v6: metataxonomic analysis workflow
+# metatax_stats (v6.2): metataxonomic analysis workflow
 
 This toolkit analyses 16S/18S/ITS and similar amplicon count tables. It runs a **simple descriptive first pass** followed by design-aware alpha, beta and taxon-level inference. The analyses use different representations because they target different quantities; there is no universal normalization that is correct for every analysis.
 
@@ -153,6 +153,34 @@ The primary reporting rank defaults to genus when genus is among the requested l
 | `<level>/beta/<metric>/` | Raw/corrected distances, PCoA and permutation test tables. |
 | `<level>/taxa/` | CLR values, filters, mixed-model tests, contrasts and figures. |
 
+## Reading the results
+
+| Question | Where to look | How to read it |
+|---|---|---|
+| Is the data usable? | `qc/`, `warnings.tsv` | Check excluded samples, library sizes, unit counts per group and the small-unit warning first. |
+| Do overall communities differ? | `results_summary.tsv` (beta rows), `<level>/beta/<metric>/terms.tsv` | `group` = treatment effect averaged over time; `time` = change over time averaged over groups; `group:time` = whether time trajectories differ between groups. R² is the share of distance variation attributed to the term. |
+| Does within-sample diversity differ? | `<level>/alpha/alpha_omnibus.tsv`, `alpha_contrasts.tsv` | Use `p_adj_across_metrics` for omnibus tests and `p_adj` for contrasts. Richness contrasts are on the log scale; `ratio` is the multiplicative difference (first level / second level). |
+| Which taxa differ? | `<level>/taxa/taxa_omnibus.tsv`, `taxa_contrasts.tsv`, `taxon_summary.tsv` | Use `q_value` (FDR). Effects are CLR differences in log2 units, i.e. changes relative to the rest of the community, not absolute abundance. Always check `unit_support_by_group`. |
+| Do conclusions depend on depth/rarefaction? | `sensitivity/rarefaction/` | `threshold_classification` shows whether each alpha/beta call changed at 0.05. |
+
+Practical guidance:
+
+* **Interaction first.** Because models use sum coding, a `group` main effect is an average over time points and `time` an average over groups. If `group:time` is credible, interpret contrasts within time or within group instead of main effects.
+* **Omnibus before contrasts.** Treat pairwise/contrast tables as follow-up to a meaningful omnibus result, or label them exploratory. Contrast adjustment is within a family only; it does not control error across all families and taxa.
+* **Absence of evidence is not evidence of absence.** With few independent units, non-significant results mainly reflect limited power. Report effect sizes and confidence intervals alongside p-values.
+* **Presence/absence-driven taxa.** A taxon detected in only one group (e.g. 0/4 vs 4/4 units) yields a very large CLR difference that depends on the zero-replacement value. Treat it as a detection difference, not a quantified fold change.
+* **Different time points are not different replicates.** Samples from the same vessel/animal/pen are correlated; only upper-level independent units count as replicates.
+* **Taxonomic levels are not independent tests.** The same data are analysed at every rank; choose the primary level in advance (default genus) and use ranks above/below it as supporting context.
+* **Raw p-values from permutation tests are bounded** by `1/(permutations+1)`; report them as `p ≤ 0.001`, not `p = 0.001`.
+
+## Reporting in a paper
+
+Suggested methods wording (edit to match the options actually used; `run_manifest.json` records versions, arguments and seed):
+
+> Count tables were analysed with metatax_stats v6.2 (Python; numpy, pandas, scipy, statsmodels). Samples were not rarefied for primary analyses; a sensitivity analysis with 20 rarefied draws at the minimum library size was run. Alpha diversity (observed features, Shannon, Simpson, Pielou, Chao1, Good's coverage) was computed from raw counts after aggregation to the stated taxonomic rank and analysed with Gaussian REML models (sum-coded treatment, time and their interaction; random intercept for the repeatedly sampled unit; richness metrics log-transformed; Wald F tests with containment degrees of freedom). Beta diversity (Bray-Curtis on relative abundances; Aitchison on CLR-transformed data after multiplicative zero replacement) was tested by permutation (999 permutations; Freedman-Lane for independent samples; restricted split-plot permutations for repeated measures), with PERMDISP as a dispersion check. Taxon-level differences used CLR-transformed data in the same mixed models, with Benjamini-Hochberg correction across taxa within each term. Taxa with prevalence < 10% of samples were not tested. Results at multiple taxonomic ranks are descriptive of the same data and were not treated as independent replication.
+
+Report at minimum: number of independent units per group, the primary taxonomic level, the adjustment method, effect sizes with confidence intervals, and exact/bounded p-values. Describe the PCA/LDA/LEfSe-inspired outputs as exploratory.
+
 ## Limitations
 
 * Small numbers of independent clusters make treatment inference unstable; nested sample counts do not replace cluster replication.
@@ -161,6 +189,10 @@ The primary reporting rank defaults to genus when genus is among the requested l
 * Repeated beta tests use a custom restricted split-plot procedure; simulation validation should be run for the designs of interest. They require complete units for time/interaction, average samples within assignment-unit × time cells, and do not adjust for covariates.
 * The first-pass LDA/LEfSe-inspired screen is exploratory, not canonical LEfSe and not a cross-validated classifier.
 * CLR taxon tests depend on zero replacement and compositional denominator choices; they do not estimate absolute abundance. Unit-level taxon support is reported; no universal support threshold is imposed by default.
+* The LEfSe-inspired screen requires every pairwise rank-sum comparison to pass a Holm-adjusted threshold. With the exact two-sided Mann-Whitney test, 4 vs 4 units has a minimum p of 0.029 (0.17 after Holm over the 6 pairs of four groups), so **no taxon can be selected with four groups of four units**; with 5 per group the minimum Holm-adjusted p is 0.048, so selection needs complete separation between every pair. A result of "0 candidates" in small studies is therefore expected and uninformative.
+* With few units, exact restricted permutation tests have coarse resolution (e.g. 4 vessels give a minimum exact p of 0.125 for a within-group time test). Use pooled or model-based tests for such questions; check `min_attainable_p`.
+* Alpha omnibus/contrast Wald tests assume approximately normal, homoscedastic residuals; check `alpha_diagnostics.tsv` and the diagnostics plots.
+* If time points come from the *same* animals/pens/vessels, supply `--subject-col`/`--cluster-col`; without them every sample is treated as independent and p-values may be anti-conservative (the report warns about this).
 * External metrics are trusted as supplied. Chao1 and Good's coverage are only computed at feature level.
 
 ## Method-validation utilities
